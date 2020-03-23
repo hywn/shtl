@@ -1,0 +1,106 @@
+<style>
+body, input { font-family: 'Comic Sans MS' }
+body { margin-top: 2em }
+.box { width: 50%; min-width: 20em; max-width: 50em; margin: auto }
+.deadline { background-color: #000; color: #fff; font-size: 0.8em; text-align: center }
+.dead { margin: 1em 0 1em 0 }
+#textbox { width: 100% }
+</style>
+
+<div class="box">
+	<h1 id="greeting">today is thirsday</h1>
+	<div id="deadlines"></div>
+	<input id="textbox" type="text" placeholder="assignment yyyy/mm/dd; shift + enter">
+</div>
+
+<script>
+const DEADLINES = document.querySelector('#deadlines')
+const TEXTBOX   = document.querySelector('#textbox')
+const GREETING  = document.querySelector('#greeting')
+const DOWS = ['sunday', 'monday', 'thursday', 'μonday', 'Thursday', 'Monday', 'saturday']
+const KEY = 'deadlines'
+let dds = JSON.parse(window.localStorage.getItem(KEY))
+
+if (!dds) dds = []
+save()
+
+function save() {
+	dds.sort((a, b) => a.time - b.time)
+	window.localStorage.setItem(KEY, JSON.stringify(dds))
+	display()
+}
+
+function addDeadline(title, time) {
+	dds.push({title: title, time: time})
+	save()
+}
+
+function removeDeadline(title) {
+	dds = dds.filter(d => d.title !== title)
+	save()
+}
+
+TEXTBOX.addEventListener('keydown', e => {
+	if (!(e.shiftKey && e.key === 'Enter')) return
+	
+	let text = TEXTBOX.value
+	
+	if (text.startsWith('-')) {
+		removeDeadline(text.substring(1))
+		TEXTBOX.value = ''
+		return
+	}
+	
+	let date = text.substring(text.lastIndexOf(' ')).trim()
+	let time = Date.parse(date)
+	let title = text.substring(0, text.lastIndexOf(' ')).trim()
+	
+	addDeadline(title, time)
+	
+	TEXTBOX.value = ''
+})
+
+//let dds = [{title: "engr lesson 7", time: 1584512995000}, {title: "some other dumb shit", time: 1584574995000}]
+
+
+function millisToDisplay(millis) {
+	return `${Math.round(millis / 86400000)} days`
+}
+
+function display() {
+	let last_time = Math.max(...dds.map(d => d.time))
+	let now = Date.now()
+	
+	GREETING.innerHTML = `today is ${DOWS[new Date(now).getDay()]}`
+	
+	DEADLINES.innerHTML = ''
+	for (d of dds) {
+		
+		if (d.time - now <= 0) {
+			removeDeadline(d.title)
+			continue
+		}
+		
+		// the title
+		let info = document.createElement('div')
+		info.className = 'deadinfo'
+		info.innerHTML = d.title
+	
+		// the line
+		let line = document.createElement('div')
+		line.className = 'deadline'
+		line.innerHTML = millisToDisplay(d.time - now)
+		line.style.width = `${100 * (d.time - now) / (last_time - now)}%`
+		
+		let dead = document.createElement('div')
+		dead.className = 'dead'
+		
+		dead.appendChild(info)
+		dead.appendChild(line)
+		
+		DEADLINES.appendChild(dead)
+	}
+}
+
+setInterval(display, 12000)
+</script>
