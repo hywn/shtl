@@ -1,0 +1,96 @@
+<html>
+
+<script src="jquery-3.4.1.min.js"></script>
+<script src="test.js"></script>
+<script src="schedule.js"></script>
+
+<div id="scheduleBox" class="box"><div id="sbInner"><canvas id="schedule"></div></div>
+
+<div id="geninfo" class="box">
+	<textarea placeholder="enter class codes (e.g. 10038) separated by newlines"id="classesToAdd"></textarea>
+	<table>
+		<tr><td></td><td><input type="button" value="add classes" onclick="addClasses();" /></td></tr>
+		<tr><td>elementary arabic ofzo</td><td><input class="class" id="10038" type="checkbox" onchange="gen();">10038</input></td></tr>
+	</table>
+	<textarea placeholder="some output will appear here" id="output"></textarea>
+</div>
+
+<style>
+body { display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	flex-direction: row-reverse }
+
+.box { background-color: #eee; padding: 1em; margin: 1em }
+	
+#sbInner { background-color: #fff; padding: 1em }
+#scheduleBox { display: inline-block }
+
+#geninfo { width:400px }
+textarea { width: 100%; height: 12em; resize: none }
+#geninfo table { margin: auto }
+#geninfo td { padding: 0.2em }
+#geninfo td:first-child { text-align: right }
+</style>
+
+<script>
+
+s = new ScheduleCanvas("schedule", {background: "#fff"});
+
+s.drawSchedule("");
+
+let params = new URL(window.location.href).searchParams;
+
+const help = { 't': true, 'f': false }
+
+function add_class_to_url (ccode, selected) {
+	params.set(ccode, selected)
+	//window.location.href = window.location.href.split('?')[0] + '?' + params.toString() // I wonder if there is a better way to do this
+	//console.log(params.toString())
+} 
+
+for (a of params) {
+	if (isNaN(a[0])) continue
+	if (!(a[1] in help)) continue
+	addClass(a[0], help[a[1]]);
+}
+	console.log(a)
+
+let srcurl = params.get("src");
+
+if (srcurl) // sets ui values from text
+     { fetch(srcurl).then((response) => response.text()).then(text => { document.querySelector("#classesToAdd").value = text
+                                                                        addClasses() }) }
+
+function addClasses() {
+	let cot = document.querySelector("#classesToAdd")
+	for (let c of cot.value.split("\n")) {
+		addClass(c, true)
+	}
+	cot.value = ''
+}
+
+function addClass(c, checked) {
+	promiseClass(c, cls => {
+		$("#geninfo table").append(`<tr><td>${cls.title}</td><td><input class="class" id="${c}" type="checkbox" onchange="gen();"${checked? ' checked':''}>${c}</input></td></tr>`);
+		gen();
+	});
+}
+
+function gen(){
+	let classes = [];
+	for (elem of document.getElementById("geninfo").querySelectorAll(".class")) {
+		add_class_to_url (elem.id, elem.checked)
+		if (elem.checked) classes.push(elem.id)
+	}
+	console.log(classes);
+	promiseSchedule(classes, sched => {
+		s.drawSchedule(sched)
+		document.querySelector('#output').value = sched
+	});
+}
+
+</script>
+
+</html>
