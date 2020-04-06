@@ -1,8 +1,9 @@
 <html>
 
 <script src="jquery-3.4.1.min.js"></script>
-<script src="test.js"></script>
+<script src="louscurl.js"></script>
 <script src="schedule.js"></script>
+<script src="canvasschedule.js"></script>
 
 <div id="scheduleBox" class="box"><div id="sbInner"><canvas id="schedule"></div></div>
 
@@ -10,7 +11,7 @@
 	<textarea placeholder="enter class codes (e.g. 10038) separated by newlines"id="classesToAdd"></textarea>
 	<table>
 		<tr><td></td><td><input type="button" value="add classes" onclick="addClasses();" /></td></tr>
-		<tr><td>elementary arabic ofzo</td><td><input class="class" id="10038" type="checkbox" onchange="gen();">10038</input></td></tr>
+		<tr><td><input class="class" id="10038" type="checkbox" onchange="gen();"></input></td><td>10038 elementary arabic ofzo</td></tr>
 	</table>
 	<textarea placeholder="some output will appear here" id="output"></textarea>
 </div>
@@ -40,24 +41,8 @@ s = new ScheduleCanvas("schedule", {background: "#fff"});
 
 s.drawSchedule("");
 
-let params = new URL(window.location.href).searchParams;
-
-const help = { 't': true, 'f': false }
-
-function add_class_to_url (ccode, selected) {
-	params.set(ccode, selected)
-	//window.location.href = window.location.href.split('?')[0] + '?' + params.toString() // I wonder if there is a better way to do this
-	//console.log(params.toString())
-} 
-
-for (a of params) {
-	if (isNaN(a[0])) continue
-	if (!(a[1] in help)) continue
-	addClass(a[0], help[a[1]]);
-}
-	console.log(a)
-
-let srcurl = params.get("src");
+let url = new URL(window.location.href);
+let srcurl = url.searchParams.get("src");
 
 if (srcurl) // sets ui values from text
      { fetch(srcurl).then((response) => response.text()).then(text => { document.querySelector("#classesToAdd").value = text
@@ -73,7 +58,8 @@ function addClasses() {
 
 function addClass(c, checked) {
 	promiseClass(c, cls => {
-		$("#geninfo table").append(`<tr><td>${cls.title}</td><td><input class="class" id="${c}" type="checkbox" onchange="gen();"${checked? ' checked':''}>${c}</input></td></tr>`);
+		console.log(cls)
+		$("#geninfo table").append(`<tr><td><input class="class" id="${c}" type="checkbox" onchange="gen();"${checked? ' checked':''}></input></td><td>${cls[0].title}</td></tr>`);
 		gen();
 	});
 }
@@ -81,13 +67,12 @@ function addClass(c, checked) {
 function gen(){
 	let classes = [];
 	for (elem of document.getElementById("geninfo").querySelectorAll(".class")) {
-		add_class_to_url (elem.id, elem.checked)
 		if (elem.checked) classes.push(elem.id)
 	}
 	console.log(classes);
 	promiseSchedule(classes, sched => {
-		s.drawSchedule(sched)
-		document.querySelector('#output').value = sched
+		s.drawScheduleCallback(sched)
+		document.querySelector('#output').value = getTextSchedule(sched)
 	});
 }
 
