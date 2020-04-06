@@ -1,6 +1,6 @@
 function promiseClass(classCode, pfunc)
 {
-	scurl("https://rabi.phys.virginia.edu/mySIS/CS2/sectiontip.php?ClassNumber=" + classCode, text => {
+	scurl("https://louslist.org/sectiontip.php?ClassNumber=" + classCode, text => {
 		let p = new Parser(text)
 		let title = p.du('class="InfoClass">').du('class="InfoClass">').deleteUntil('<br')
 		let tals = []
@@ -61,7 +61,7 @@ function toHRT(textTime) // 10:00PM -> 22:00 -> 22
 
 function scurl(url, cfunc)
 {
-	return $.getJSON('http://www.whateverorigin.org/get?url=' + encodeURIComponent(url) + '&callback=?', response => cfunc(response.contents));
+	return $.getJSON('https://api.allorigins.win/get?url=' + encodeURIComponent(url), response => cfunc(response.contents));
 }
 
 class Parser
