@@ -30,6 +30,12 @@ function save() {
 	display()
 }
 
+/// basic sanitation
+function clean(stuff)
+{
+	return stuff.replace(/<.*?>/g, '')
+}
+
 function addDeadline(title, time) {
 	dds.push({title: title, time: time})
 	save()
@@ -84,7 +90,7 @@ function display() {
 		// the title
 		let info = document.createElement('div')
 		info.className = 'deadinfo'
-		info.innerHTML = d.title
+		info.innerHTML = clean(d.title)
 	
 		// the line
 		let line = document.createElement('div')
