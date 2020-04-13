@@ -1,0 +1,87 @@
+<style>
+body, input { font-family: 'Comic Sans MS' }
+body { margin-top: 2em }
+.box { width: 32em; margin: auto }
+#textbox { width: 100% }
+#list { padding: 1em }
+.item:hover { background-color: #eee }
+.item       a { display: none; float: right }
+.item:hover a { display: block }
+</style>
+
+<div class="box">
+	<h1 id="greeting">today is thirsday</h1>
+	<input id="textbox" type="text" placeholder="type something; enter">
+	<div id="list"></div>
+</div>
+
+<script>
+const LIST      = document.querySelector('#list')
+const TEXTBOX   = document.querySelector('#textbox')
+const GREETING  = document.querySelector('#greeting')
+
+const KEY = 'todo_list'
+
+const DOWS = ['sunday', 'monday', 'tuesday', 'μonday', 'Tuesday', 'Monday', 'saturday']
+
+let mylist = JSON.parse(window.localStorage.getItem(KEY))
+
+if (!mylist)
+	mylist = ['nothing to do yet!']
+save()
+
+/// saves list in local storage
+function save()
+{
+	window.localStorage.setItem(KEY, JSON.stringify(mylist))
+	display()
+}
+
+/// basic sanitation
+function clean(stuff)
+{
+	return stuff.replace(/<.*?>/g, '')
+}
+
+/// refreshes list display
+function display()
+{
+	GREETING.innerHTML = `today is ${DOWS[new Date(Date.now()).getDay()]}`
+	
+	LIST.innerHTML = ''
+	
+	for (const [i, item_name] of mylist.entries()) {
+		
+		const item = document.createElement('div')
+		
+		item.className = 'item'
+		item.innerHTML = clean(item_name) + `<a href="javascript:remove(${i})">[remove]</a>`
+		
+		LIST.appendChild(item)
+		
+	}
+}
+
+/// lets user remove stuff from list
+function remove(index)
+{
+	mylist.splice(index, 1)
+	save()
+}
+
+/// lets user add stuff to list
+TEXTBOX.addEventListener('keydown', e => {
+	if (e.key !== 'Enter') return
+	
+	mylist.push(TEXTBOX.value)
+	
+	console.log(mylist)
+	
+	save()
+	
+	TEXTBOX.value = ''
+})
+
+/// occasionally refreshes list automatically to update day of week
+setInterval(display, 12000)
+</script>
