@@ -1,6 +1,6 @@
 /*
 
-schedule object:
+item object:
 
 [{
 	title: 'My Item Title'
@@ -11,12 +11,23 @@ schedule object:
 }, ...]
 
 mowefr
-Calculus at Olsson 009
+8:30-10 Calculus at Olsson 009
 
 */
 
-days = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa']
+const days = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa']
 
+/** takes text representing some items in format
+ **
+ ** mowefr
+ ** 8:30-10 Calculus at Olsson 009
+ ** 11-12   Lunch
+ **
+ ** tu
+ ** 12-15:45 eat
+ **
+ ** and returns a list of items
+ */
 function parseSchedule(text)
 {
 	let items = []
@@ -24,6 +35,43 @@ function parseSchedule(text)
 		if (chunk)
 			items = items.concat(parseChunk(chunk))
 	return items
+}
+
+/** takes text separated by single newlines
+ ** text is in following format:
+ **
+ ** mowefr
+ ** 8:30-10 Calculus at Olsson 009
+ ** 11-12   Lunch
+ **
+ ** and returns its representative items
+ */
+function parseChunk(chunkText)
+{
+	let items = []
+	let lines = chunkText.split('\n')
+	let dows = lines[0].toLowerCase().split(/(?=(?:..)*$)/).map(dow => days.indexOf(dow))
+	for (let line of lines.slice(1, lines.length)) {
+		let spaces = line.split(' ')
+		let atIndex = line.indexOf(' at ')
+		items.push({
+			title: line.substring(12, (atIndex == -1)? line.length : atIndex),
+			loc: (atIndex == -1)? 'idk lmao' : line.substring(atIndex + 4),
+			start: parseHours(line, 0, 5),
+			end: parseHours(line, 6, 5),
+			dows: dows
+		})
+		//console.log(items)
+	}
+	
+	return items
+}
+
+function parseHours(string, start, end)
+{
+	parts = string.substr(start, end).split(':')
+	
+	return parseInt(parts[0]) + parseInt(parts[1])/60
 }
 
 function getTextSchedule(schedule)
@@ -41,26 +89,3 @@ function to24Hour(hrt)
 	let minutes = Math.round(60 * (hrt - hours))
 	return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
 }
-
-function parseChunk(chunkText) {
-	let items = []
-	let lines = chunkText.split('\n')
-	let dows = lines[0].toLowerCase().split(/(?=(?:..)*$)/).map(dow => days.indexOf(dow))
-	for (let line of lines.slice(1, lines.length)) {
-		let spaces = line.split(' ')
-		let atIndex = line.indexOf(' at ')
-		items.push({
-			title: line.substring(12, (atIndex == -1)? line.length : atIndex),
-			loc: (atIndex == -1)? 'idk lmao' : line.substring(atIndex + 4),
-			start: parseHours(line, 0, 5),
-			end: parseHours(line, 6, 5),
-			dows: dows
-		})
-		//console.log(items)
-	}
-	return items
-}
-
-function parseHours(string, start, end)
-     { parts = string.substr(start, end).split(':')
-       return parseInt(parts[0]) + parseInt(parts[1])/60 }
