@@ -1,6 +1,5 @@
 <html>
 
-<script src="jquery-3.4.1.min.js"></script>
 <script src="schedule.js"></script>
 <script src="canvasschedule.js"></script>
 
@@ -13,6 +12,7 @@
 				<td></td>
 				<td><input type="button" value="generate" onclick="gen();" /></td>
 			</tr>
+			<tbody id="fields"></tbody>
 			<tr>
 				<td><input type="button" value="import settings, generate" onclick="importSettings();" /></td>
 				<td><input type="button" value="append/replace settings" onclick="appendSettings();" /></td>
@@ -48,13 +48,19 @@ if (srcurl) // sets ui values from text
 	fetch(srcurl).then((response) => response.text()).then(text => {
 		data.value = text
 		importSettings()
-	}) 
+	})
 }
 
 // generate settings panel
-
-for (let [k, v] of Object.entries(default_settings).reverse())
-	$("tr:first-child").after(`<tr><td>${k}</td><td><input id="${k}" type="text" value="${v}" /></td></tr>`);
+for (const [k, v] of Object.entries(default_settings)) {
+	
+	const field = document.createElement('tr')
+	
+	field.innerHTML = `<td>${k}</td><td><input id="${k}" type="text" value="${v}" /></td>`
+	
+	document.querySelector('#fields').appendChild(field)
+	
+}
 
 gen()
 
