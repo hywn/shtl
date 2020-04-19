@@ -1,6 +1,5 @@
 <html>
 
-<script src="jquery-3.4.1.min.js"></script>
 <script src="louscurl.js"></script>
 <script src="schedule.js"></script>
 <script src="canvasschedule.js"></script>
@@ -59,7 +58,13 @@ function addClasses() {
 function addClass(c, checked) {
 	promiseClass(c, cls => {
 		console.log(cls)
-		$("#geninfo table").append(`<tr><td><input class="class" id="${c}" type="checkbox" onchange="gen();"${checked? ' checked':''}></input></td><td>${cls[0].title}</td></tr>`);
+		
+		const classSelect = document.createElement('tr')
+		
+		classSelect.innerHTML = `<td><input class="class" id="${c}" type="checkbox" onchange="gen();"${checked? ' checked':''}></input></td><td>${cls[0].title}</td>`
+		
+		document.querySelector("#geninfo table").appendChild(classSelect);
+		
 		gen();
 	});
 }
