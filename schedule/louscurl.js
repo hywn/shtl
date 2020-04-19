@@ -29,7 +29,8 @@ function promiseSchedule(classCodes, pfunc)
 	}
 }
 
-let days = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa']
+// quickfix: just make sure to load schedule.js beforehand
+// const days = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa']
 
 function getTALs(p, times=[])
 {
@@ -61,7 +62,9 @@ function toHRT(textTime) // 10:00PM -> 22:00 -> 22
 
 function scurl(url, cfunc)
 {
-	return $.getJSON('https://api.allorigins.win/get?url=' + encodeURIComponent(url), response => cfunc(response.contents));
+	fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url))
+		.then(resp => resp.json())
+		.then(json => cfunc(json.contents))
 }
 
 class Parser
