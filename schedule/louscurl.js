@@ -1,42 +1,48 @@
+/// note: uses the following from schedule.js
+/// const days = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa']
+
+function promiseSchedule(classCodes, pfunc)
+{
+	const schedule = []
+	const goal = classCodes.length
+	let curr = 0
+	
+	if (goal == 0) { pfunc(''); return }
+	
+	for (let classCode of classCodes) {
+		promiseClass(classCode, classes => {
+			schedule.push(...classes)
+			if (++curr == goal)
+				pfunc(schedule)
+		})
+	}
+}
+
 function promiseClass(classCode, pfunc)
 {
 	scurl("https://louslist.org/sectiontip.php?ClassNumber=" + classCode, text => {
-		let p = new Parser(text)
-		let title = p.du('class="InfoClass">').du('class="InfoClass">').deleteUntil('<br')
-		let tals = []
-		for (tal of getTALs(p))
-			tals.push({
+		const p = new Parser(text)
+		const title = p.du('class="InfoClass">').du('class="InfoClass">').deleteUntil('<br')
+		
+		const tals = getTALs(p.du('class="InfoMeetings"'))
+			.map(tal => ({
 				title: title,
 				loc: tal.loc,
 				dows: tal.dows,
 				start: tal.start,
 				end: tal.end
-			})
+			}))
+		
 		pfunc(tals)
 	})
 }
 
-function promiseSchedule(classCodes, pfunc)
-{
-	let schedule = []
-	let curr = 0, goal = classCodes.length
-	if (goal == 0) { pfunc(""); return }
-	for (let classCode of classCodes) {
-		promiseClass(classCode, classes => {
-			schedule = schedule.concat(classes)
-			if (++curr == goal) pfunc(schedule)
-		})
-	}
-}
-
-// quickfix: just make sure to load schedule.js beforehand
-// const days = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa']
-
+/* takes a Parser object that points to a louslist course page right after the first 'class="InfoMeetings"'
+ * returns a list of TALs that represents that course
+*/
 function getTALs(p, times=[])
-{
-	if (times.length == 0) p.deleteUntil('class="InfoMeetings"')
-	
-	let timeStuff = p.du('</td><td>').deleteUntil("</td><td>").split(' ') // 'MoWeFr 9:00AM - 9:50AM' split by spaces
+{	
+	const timeStuff = p.du('</td><td>').deleteUntil("</td><td>").split(' ') // 'MoWeFr 9:00AM - 9:50AM' split by spaces
 
 	times.push({
 		loc: p.deleteUntil("</td>"),
@@ -53,13 +59,22 @@ function getTALs(p, times=[])
 	return times;
 }
 
-function toHRT(textTime) // 10:00PM -> 22:00 -> 22
+/* takes a 12-hour time string
+ * returns a float that represents the time in hours (referred to as an HRT)
+ * 
+ * "8:30PM" -> 20.5
+*/
+function toHRT(text)
 {
-	let numbers = textTime.match(/\d{1,}/g).map(num => Number(num));
-	let ampm = textTime.toLowerCase().match(/am|pm/g)[0] === 'pm' ? 12 : 0;
-	return (ampm + numbers[0] % 12) + numbers[1] / 60
+	const nums = text.match(/[0-9]+/g).map(n => Number(n))
+	const ampm = text.toLowerCase().match(/am|pm/g)[0] === 'pm' ? 12 : 0
+	
+	return (ampm + nums[0] % 12) + nums[1] / 60
 }
 
+/* takes a url and a function
+ * runs the function with the url's response text
+*/
 function scurl(url, cfunc)
 {
 	fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url))
@@ -69,24 +84,30 @@ function scurl(url, cfunc)
 
 class Parser
 {
-	constructor (text, bindex, bsize)
+	constructor(text, bindex, bsize)
 	{
 		this.text = text
 		this.bindex = 0
 		this.bsize = 0
 	}
 	
-	getBuffer (offset=0) { return this.text.substring(this.bindex, this.bindex + this.bsize + offset) }
+	getBuffer(offset=0)
+	{
+		return this.text.substring(this.bindex, this.bindex + this.bsize + offset)
+	}
 	
-	reset () { this.bindex = this.bsize = 0 }
+	reset()
+	{
+		this.bindex = this.bsize = 0
+	}
 	
-	clear (keepBuffer=false)
+	clear(keepBuffer=false)
 	{
 		if(!keepBuffer) this.bindex += this.bsize
 		this.bsize = 0
 	}
 	
-	continueUntil (token, keepToken=false)
+	continueUntil(token, keepToken=false)
 	{
 		while(!this.getBuffer().endsWith(token)) {
 			if(this.bindex + this.bsize == this.text.length) return null
@@ -95,12 +116,15 @@ class Parser
 		return this.getBuffer(keepToken? 0 : -token.length)
 	}
 	
-	deleteUntil (token)
+	deleteUntil(token)
 	{
 		let buffer = this.continueUntil(token)
 		this.clear()
 		return buffer
 	}
 	
-	du (token) { this.deleteUntil(token); return this }
+	du (token){
+		this.deleteUntil(token)
+		return this
+	}
 }
